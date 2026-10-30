@@ -1,0 +1,17 @@
+.git
+node_modules
+.env
+.env.*
+data
+.data
+coverage
+test-results
+playwright-report
+*.sqlite*
+*.log
+attachments
+docs
+test
+tests
+e2e
+playwright.config.js

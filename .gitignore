@@ -1,0 +1,16 @@
+node_modules/
+.env
+.env.*
+!.env.example
+data/
+.data/
+public/vendor/astronomy-engine.js
+public/fonts/
+coverage/
+test-results/
+playwright-report/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.log
+.DS_Store

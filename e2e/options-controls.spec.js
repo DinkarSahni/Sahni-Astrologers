@@ -1,0 +1,43 @@
+import { test, expect } from '@playwright/test';
+
+test('calculation choices survive language changes before birth-chart generation', async ({ page }) => {
+  const external = [], writes = [], numerical = [], errors = [];
+  page.on('request', request => {
+    if (!request.url().startsWith('http://localhost:4173/')) external.push(request.url());
+    if (request.method() === 'POST') writes.push(request.url());
+    if (/\/(chart-engine|astronomy-engine)\.js$/.test(request.url())) numerical.push(request.url());
+  });
+  page.on('pageerror', error => errors.push(error.message));
+  await page.route('https://**/*', route => route.abort());
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/birth-chart');
+  const settings = page.locator('#chart-calculation-options');
+  await expect(settings).not.toHaveAttribute('open', '');
+  await settings.locator('summary').click();
+  await expect(page.locator('#chart-node-mode')).toHaveValue('mean');
+  await expect(page.locator('#chart-style')).toHaveValue('north');
+  await expect(page.locator('#chart-dasha-year')).toHaveValue('365.25');
+  await page.locator('#chart-node-mode').selectOption('true');
+  await page.locator('#chart-style').selectOption('south');
+  await page.locator('#chart-dasha-year').selectOption('360');
+  await expect(page.locator('#chart-options-caption')).toHaveText('True node approx. · South Indian');
+  await page.locator('#chart-language').selectOption('hi');
+  await expect(settings).toHaveAttribute('lang', 'hi');
+  await expect(settings).toHaveAttribute('open', '');
+  await expect(page.locator('#chart-node-mode')).toHaveValue('true');
+  await expect(page.locator('#chart-style')).toHaveValue('south');
+  await expect(page.locator('#chart-dasha-year')).toHaveValue('360');
+  await expect(page.locator('#chart-options-caption')).toHaveText('वास्तविक नोड का सन्निकटन · दक्षिण भारतीय');
+  await expect(page.locator('label[for="chart-node-mode"]')).toHaveText('राहु / केतु की गणना');
+  await expect(page.locator('#chart-ayanamsa-value')).toContainText('सन्निकटन');
+  await page.locator('#chart-language').selectOption('en');
+  await expect(page.locator('#chart-node-mode')).toHaveValue('true');
+  await expect(page.locator('#chart-style')).toHaveValue('south');
+  await expect(page.locator('#chart-dasha-year')).toHaveValue('360');
+  await expect(page.locator('#chart-options-caption')).toHaveText('True node approx. · South Indian');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
+  expect(numerical).toEqual([]);
+  expect(writes).toEqual([]);
+  expect(external).toEqual([]);
+  expect(errors).toEqual([]);
+});
